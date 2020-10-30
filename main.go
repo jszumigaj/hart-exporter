@@ -28,26 +28,26 @@ func main() {
 	}
 	defer serial.Close()
 
-	master := hart.NewCommandExecutor(serial)
-	var device device.UniversalDevice
+	master := hart.NewMaster(serial)
+	device := &device.UniversalDevice{}
 	commands := []hart.Command{
 		device.Command1(),
 		device.Command2(),
 		device.Command3(),
 	}
 	executed := make(chan hart.Command)
-	go executeCommands(master, &device, commands, executed)
-	go displayResults(&device, executed)
+	go executeCommands(master, device, commands, executed)
+	go displayResults(device, executed)
 
 	http.Handle("/metrics", promhttp.Handler())
-	http.Handle("/hart", hartHandler(&device))
+	http.Handle("/hart", hartHandler(device))
 
 	log.Printf("Listening on %d", listenPort)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", listenPort), nil))
 
 }
 
-func executeCommands(master hart.CommandExecutor, device *device.UniversalDevice, commands []hart.Command, executed chan<- hart.Command) error {
+func executeCommands(master *hart.Master, device *device.UniversalDevice, commands []hart.Command, executed chan<- hart.Command) error {
 
 	// identification
 	command0 := device.Command0()
