@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/jszumigaj/hart"
-	"github.com/jszumigaj/hart/device"
+	"github.com/jszumigaj/hart/univrsl"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -29,7 +29,7 @@ func main() {
 	defer serial.Close()
 
 	master := hart.NewMaster(serial)
-	device := &device.UniversalDevice{}
+	device := &univrsl.Device{}
 	commands := []hart.Command{
 		device.Command1(),
 		device.Command2(),
@@ -47,7 +47,7 @@ func main() {
 
 }
 
-func executeCommands(master *hart.Master, device *device.UniversalDevice, commands []hart.Command, executed chan<- hart.Command) error {
+func executeCommands(master *hart.Master, device *univrsl.Device, commands []hart.Command, executed chan<- hart.Command) error {
 
 	// identification
 	command0 := device.Command0()
@@ -75,7 +75,7 @@ func executeCommands(master *hart.Master, device *device.UniversalDevice, comman
 	}
 }
 
-func displayResults(device *device.UniversalDevice, executed <-chan hart.Command) {
+func displayResults(device *univrsl.Device, executed <-chan hart.Command) {
 	for cmd := range executed {
 		log.Println("Command status:", cmd.Status())
 		log.Println("Device status:", device.Status())
@@ -110,7 +110,7 @@ func displayResults(device *device.UniversalDevice, executed <-chan hart.Command
 	}
 }
 
-func hartHandler(device *device.UniversalDevice) http.Handler {
+func hartHandler(device *univrsl.Device) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
