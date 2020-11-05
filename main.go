@@ -34,6 +34,8 @@ func main() {
 		&univrsl.Command1{},
 		&univrsl.Command2{},
 		&univrsl.Command3{},
+		&univrsl.Command13{},
+		&univrsl.Command15{},
 	}
 	executed := make(chan hart.Command)
 	go executeCommands(master, device, commands, executed)
@@ -101,6 +103,16 @@ func displayResults(device *univrsl.Device, executed <-chan hart.Command) {
 			tvGauge.WithLabelValues(fmt.Sprint(cmd.TvUnit)).Set(float64(cmd.Tv))
 			log.Printf("FV: %v [%v]\n", cmd.Fv, cmd.FvUnit)
 			fvGauge.WithLabelValues(fmt.Sprint(cmd.FvUnit)).Set(float64(cmd.Tv))
+		} else if cmd, ok := command.(*univrsl.Command13); ok {
+			log.Printf("Tag: %v", cmd.Tag)
+			log.Printf("Descriptor: %v", cmd.Descriptor)
+			log.Printf("Date: %v", cmd.Date.Format("2006-01-02"))
+			deviceInfo13Gauge.WithLabelValues(cmd.Tag, cmd.Descriptor, cmd.Date.Format("2006-01-02")).Set(1)
+		} else if cmd, ok := command.(*univrsl.Command15); ok {
+			log.Printf("Cmd15: %v", cmd)
+			log.Printf("LRV: %v [%v]\n", cmd.LowerRangeValue, cmd.UpperAndLowerRangeValuesUnit)
+			log.Printf("URV: %v [%v]\n", cmd.UpperRangeValue, cmd.UpperAndLowerRangeValuesUnit)
+
 		}
 	}
 }

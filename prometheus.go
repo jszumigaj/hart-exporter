@@ -16,6 +16,11 @@ var (
 		Help: "HART device info",
 	}, []string{"ManufacturerId", "DeviceType", "DeviceId"})
 
+	deviceInfo13Gauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "device_info_cmd13",
+		Help: "HART command 13 output",
+	}, []string{"Tag", "Descriptor", "Date"})
+
 	pvGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "device_pv_value",
 		Help: "A device PV float32 value.",
@@ -43,6 +48,17 @@ var (
 		Name: "device_percent_of_range_value",
 		Help: "A device Percent of Range float32 value in %.",
 	})
+
+	lrvGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "device_lower_range_value",
+		Help: "A device Lower Range Value (LRV) float32 value.",
+	}, []string{"unit"})
+
+	urvGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "device_upper_range_value",
+		Help: "A device Upper Range Value (URV) float32 value.",
+	}, []string{"unit"})
+
 )
 
 func init() {
