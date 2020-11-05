@@ -40,7 +40,7 @@ func main() {
 	go displayResults(device, executed)
 
 	http.Handle("/metrics", promhttp.Handler())
-	http.Handle("/hart", hartHandler(device))
+	http.Handle("/hart", hartHandler(device, commands))
 
 	log.Printf("Listening on %d", listenPort)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", listenPort), nil))
@@ -87,32 +87,29 @@ func displayResults(device *univrsl.Device, executed <-chan hart.Command) {
 			devid := fmt.Sprintf("%07d", device.Id())
 			deviceInfoGauge.WithLabelValues(manid, devtype, devid).Set(1)
 		} else if cmd, ok := command.(*univrsl.Command1); ok {
-			v, u := cmd.PV()
-			log.Printf("PV: %v [%v]\n", v, u)
-			pvGauge.WithLabelValues(fmt.Sprint(u)).Set(float64(v))
+			log.Printf("PV: %v [%v]\n", cmd.PV, cmd.Unit)
+			pvGauge.WithLabelValues(fmt.Sprint(cmd.Unit)).Set(float64(cmd.PV))
 		} else if cmd, ok := command.(*univrsl.Command2); ok {
-			log.Printf("Current: %v [mA]\n", cmd.Current())
-			log.Printf("PoR: %v [%%]\n", cmd.PercentOfRange())
-			currentGauge.Set(float64(cmd.Current()))
-			porGauge.Set(float64(cmd.PercentOfRange()))
+			log.Printf("Current: %v [mA]\n", cmd.Current)
+			log.Printf("PoR: %v [%%]\n", cmd.PercentOfRange)
+			currentGauge.Set(float64(cmd.Current))
+			porGauge.Set(float64(cmd.PercentOfRange))
 		} else if cmd, ok := command.(*univrsl.Command3); ok {
-			v, u := cmd.SV()
-			log.Printf("SV: %v [%v]\n", v, u)
-			svGauge.WithLabelValues(fmt.Sprint(u)).Set(float64(v))
-			v, u = cmd.TV()
-			log.Printf("TV: %v [%v]\n", v, u)
-			tvGauge.WithLabelValues(fmt.Sprint(u)).Set(float64(v))
-			v, u = cmd.FV()
-			log.Printf("FV: %v [%v]\n", v, u)
-			fvGauge.WithLabelValues(fmt.Sprint(u)).Set(float64(v))
+			log.Printf("SV: %v [%v]\n", cmd.Sv, cmd.SvUnit)
+			svGauge.WithLabelValues(fmt.Sprint(cmd.SvUnit)).Set(float64(cmd.Sv))
+			log.Printf("TV: %v [%v]\n", cmd.Tv, cmd.TvUnit)
+			tvGauge.WithLabelValues(fmt.Sprint(cmd.TvUnit)).Set(float64(cmd.Tv))
+			log.Printf("FV: %v [%v]\n", cmd.Fv, cmd.FvUnit)
+			fvGauge.WithLabelValues(fmt.Sprint(cmd.FvUnit)).Set(float64(cmd.Tv))
 		}
 	}
 }
 
-func hartHandler(device *univrsl.Device) http.Handler {
+// Handle http request by serializing data
+func hartHandler(data ...interface{}) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		json.NewEncoder(w).Encode(device)
+		json.NewEncoder(w).Encode(data)
 	})
 }
