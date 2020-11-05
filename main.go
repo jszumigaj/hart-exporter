@@ -31,9 +31,9 @@ func main() {
 	master := hart.NewMaster(serial)
 	device := &univrsl.Device{}
 	commands := []hart.Command{
-		device.Command1(),
-		device.Command2(),
-		device.Command3(),
+		&univrsl.Command1{},
+		&univrsl.Command2{},
+		&univrsl.Command3{},
 	}
 	executed := make(chan hart.Command)
 	go executeCommands(master, device, commands, executed)
@@ -51,7 +51,7 @@ func executeCommands(master *hart.Master, device *univrsl.Device, commands []har
 
 	// identification
 	command0 := device.Command0()
-	_, err := master.Execute(command0)
+	_, err := master.Execute(command0, device)
 	if err != nil {
 		log.Println(err)
 		close(executed)
@@ -62,7 +62,7 @@ func executeCommands(master *hart.Master, device *univrsl.Device, commands []har
 
 	for {
 		for _, c := range commands {
-			_, err = master.Execute(c)
+			_, err = master.Execute(c, device)
 			if err == nil {
 				executed <- c
 			} else {
@@ -76,34 +76,33 @@ func executeCommands(master *hart.Master, device *univrsl.Device, commands []har
 }
 
 func displayResults(device *univrsl.Device, executed <-chan hart.Command) {
-	for cmd := range executed {
-		log.Println("Command status:", cmd.Status())
+	for command := range executed {
+		log.Println("Command status:", command.Status())
 		log.Println("Device status:", device.Status())
 
-		switch cmd.No() {
-		case 0:
+		if _, ok := command.(*univrsl.Command0); ok {
 			log.Printf("Device %v", device)
 			manid := fmt.Sprintf("%x", device.ManufacturerId())
 			devtype := fmt.Sprintf("%x", device.MfrsDeviceType())
 			devid := fmt.Sprintf("%07d", device.Id())
 			deviceInfoGauge.WithLabelValues(manid, devtype, devid).Set(1)
-		case 1:
-			v, u := device.PV()
+		} else if cmd, ok := command.(*univrsl.Command1); ok {
+			v, u := cmd.PV()
 			log.Printf("PV: %v [%v]\n", v, u)
 			pvGauge.WithLabelValues(fmt.Sprint(u)).Set(float64(v))
-		case 2:
-			log.Printf("Current: %v [mA]\n", device.Current())
-			log.Printf("PoR: %v [%%]\n", device.PercentOfRange())
-			currentGauge.Set(float64(device.Current()))
-			porGauge.Set(float64(device.PercentOfRange()))
-		case 3:
-			v, u := device.SV()
+		} else if cmd, ok := command.(*univrsl.Command2); ok {
+			log.Printf("Current: %v [mA]\n", cmd.Current())
+			log.Printf("PoR: %v [%%]\n", cmd.PercentOfRange())
+			currentGauge.Set(float64(cmd.Current()))
+			porGauge.Set(float64(cmd.PercentOfRange()))
+		} else if cmd, ok := command.(*univrsl.Command3); ok {
+			v, u := cmd.SV()
 			log.Printf("SV: %v [%v]\n", v, u)
 			svGauge.WithLabelValues(fmt.Sprint(u)).Set(float64(v))
-			v, u = device.TV()
+			v, u = cmd.TV()
 			log.Printf("TV: %v [%v]\n", v, u)
 			tvGauge.WithLabelValues(fmt.Sprint(u)).Set(float64(v))
-			v, u = device.FV()
+			v, u = cmd.FV()
 			log.Printf("FV: %v [%v]\n", v, u)
 			fvGauge.WithLabelValues(fmt.Sprint(u)).Set(float64(v))
 		}
