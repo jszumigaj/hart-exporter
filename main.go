@@ -14,15 +14,15 @@ import (
 )
 
 var (
-	serialPort = *flag.String("serial", "COM1", "Serial port name ex. COM1")
-	listenPort = *flag.Int("listen", 3333, "Listening port ex. 8000.")
+	serialPort = flag.String("c", "COM1", "Serial port name ex. COM2")
+	listenPort = flag.Int("l", 9090, "Listening port ex. 8000.")
 )
 
 func main() {
 	flag.Parse()
-	log.Printf("Using serial port %s", serialPort)
+	log.Printf("Using serial port %s", *serialPort)
 
-	serial, err := hart.Open(serialPort)
+	serial, err := hart.Open(*serialPort)
 	if err != nil {
 		log.Fatalln("ERROR:", err)
 	}
@@ -44,8 +44,8 @@ func main() {
 	http.Handle("/metrics", promhttp.Handler())
 	http.Handle("/hart", hartHandler(device, commands))
 
-	log.Printf("Listening on %d", listenPort)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", listenPort), nil))
+	log.Printf("Listening on %d", *listenPort)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *listenPort), nil))
 
 }
 
