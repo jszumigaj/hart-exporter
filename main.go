@@ -64,7 +64,7 @@ func executeCommands(master *hart.Master, device *univrsl.Device, commands []har
 
 		}
 		elapsed := time.Now().Sub(start)
-		time.Sleep(time.Duration(*delay) * time.Second - elapsed)
+		time.Sleep(time.Duration(*delay)*time.Second - elapsed)
 	}
 }
 
@@ -72,6 +72,8 @@ func displayResults(device *univrsl.Device, executed <-chan hart.Command) {
 	for command := range executed {
 		log.Println("Command status:", command.Status())
 		log.Println("Device status:", device.Status())
+		deviceStatusInfoGauge.WithLabelValues(fmt.Sprint(device.Status())).Inc()
+		commandStatusInfoGauge.WithLabelValues(fmt.Sprint(command.Status())).Inc()
 
 		if _, ok := command.(*univrsl.Command0); ok {
 			log.Printf("Cmd #0: Device %v", device)
@@ -105,10 +107,13 @@ func displayResults(device *univrsl.Device, executed <-chan hart.Command) {
 			deviceInfo13Gauge.WithLabelValues(cmd.Tag, cmd.Descriptor, cmd.Date.Format("2006-01-02")).Set(1)
 
 		} else if cmd, ok := command.(*univrsl.Command15); ok {
+			unit := fmt.Sprint(cmd.UpperAndLowerRangeValuesUnit)
 			log.Printf("Cmd #15: %v", cmd)
-			log.Printf("Cmd #15: LRV = %v [%v]\n", cmd.LowerRangeValue, cmd.UpperAndLowerRangeValuesUnit)
-			log.Printf("Cmd #15: URV = %v [%v]\n", cmd.UpperRangeValue, cmd.UpperAndLowerRangeValuesUnit)
-
+			log.Printf("Cmd #15: Range = %v ... %v [%v]\n", cmd.LowerRangeValue, cmd.UpperRangeValue, unit)
+			log.Printf("Cmd #15: Damping = %v [s]\n", cmd.Damping)
+			lrvGauge.WithLabelValues(unit).Set(float64(cmd.LowerRangeValue))
+			urvGauge.WithLabelValues(unit).Set(float64(cmd.UpperRangeValue))
+			dampingGauge.Set(float64(cmd.Damping))
 		}
 	}
 }

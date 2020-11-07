@@ -21,6 +21,16 @@ var (
 		Help: "HART command 13 output",
 	}, []string{"Tag", "Descriptor", "Date"})
 
+	deviceStatusInfoGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "device_status_info",
+		Help: "HART field device status",
+	}, []string{"Status"})
+
+	commandStatusInfoGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "command_status_info",
+		Help: "HART last command status",
+	}, []string{"Status"})
+
 	pvGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "device_pv_value",
 		Help: "A device PV float32 value.",
@@ -59,6 +69,10 @@ var (
 		Help: "A device Upper Range Value (URV) float32 value.",
 	}, []string{"unit"})
 
+	dampingGauge = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "device_damping_value",
+		Help: "A device Damping float32 value.",
+	})
 )
 
 func init() {
