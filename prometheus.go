@@ -6,11 +6,6 @@ import (
 )
 
 var (
-	appInfoGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "app_info",
-		Help: "Application info",
-	}, []string{"version"})
-
 	deviceInfoGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "device_info",
 		Help: "HART device info",
@@ -31,6 +26,11 @@ var (
 		Help: "HART last command status",
 	}, []string{"Status"})
 
+	hartCommErrorsCounter = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "hart_communication_errors_counter",
+		Help: "HART communications errors counter",
+	}, []string{"Error"})
+
 	pvGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "device_pv_value",
 		Help: "A device PV float32 value.",
@@ -40,10 +40,12 @@ var (
 		Name: "device_sv_value",
 		Help: "A device SV float32 value.",
 	}, []string{"unit"})
+
 	tvGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "device_tv_value",
 		Help: "A device TV float32 value.",
 	}, []string{"unit"})
+
 	fvGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "device_fv_value",
 		Help: "A device FV float32 value.",
@@ -76,5 +78,11 @@ var (
 )
 
 func init() {
-	appInfoGauge.WithLabelValues("0.1.0").Set(1)
+	
+	var appInfoGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "app_info",
+		Help: "Application info",
+	}, []string{"version"})
+
+	appInfoGauge.WithLabelValues("0.2.0").Set(1)
 }

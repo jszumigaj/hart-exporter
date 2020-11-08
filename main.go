@@ -58,6 +58,7 @@ func executeCommands(master *hart.Master, device *univrsl.Device, commands []har
 
 			if _, err := master.Execute(cmd, device); err != nil {
 				log.Println(cmd.Description(), "error:", err)
+				hartCommErrorsCounter.WithLabelValues(err.Error()).Inc()
 			} else {
 				executed <- cmd
 			}
@@ -72,8 +73,8 @@ func displayResults(device *univrsl.Device, executed <-chan hart.Command) {
 	for command := range executed {
 		log.Println("Command status:", command.Status())
 		log.Println("Device status:", device.Status())
-		deviceStatusInfoGauge.WithLabelValues(fmt.Sprint(device.Status())).Inc()
-		commandStatusInfoGauge.WithLabelValues(fmt.Sprint(command.Status())).Inc()
+		deviceStatusInfoGauge.WithLabelValues(device.Status().String()).Inc()
+		commandStatusInfoGauge.WithLabelValues(command.Status().String()).Inc()
 
 		if _, ok := command.(*univrsl.Command0); ok {
 			log.Printf("Cmd #0: Device %v", device)
@@ -84,7 +85,7 @@ func displayResults(device *univrsl.Device, executed <-chan hart.Command) {
 
 		} else if cmd, ok := command.(*univrsl.Command1); ok {
 			log.Printf("Cmd #1: PV = %v [%v]\n", cmd.PV, cmd.Unit)
-			pvGauge.WithLabelValues(fmt.Sprint(cmd.Unit)).Set(float64(cmd.PV))
+			pvGauge.WithLabelValues(cmd.Unit.String()).Set(float64(cmd.PV))
 
 		} else if cmd, ok := command.(*univrsl.Command2); ok {
 			log.Printf("Cmd #2: Current = %v [mA]\n", cmd.Current)
@@ -94,11 +95,11 @@ func displayResults(device *univrsl.Device, executed <-chan hart.Command) {
 
 		} else if cmd, ok := command.(*univrsl.Command3); ok {
 			log.Printf("Cmd #3: SV = %v [%v]\n", cmd.Sv, cmd.SvUnit)
-			svGauge.WithLabelValues(fmt.Sprint(cmd.SvUnit)).Set(float64(cmd.Sv))
+			svGauge.WithLabelValues(cmd.SvUnit.String()).Set(float64(cmd.Sv))
 			log.Printf("Cmd #3: TV = %v [%v]\n", cmd.Tv, cmd.TvUnit)
-			tvGauge.WithLabelValues(fmt.Sprint(cmd.TvUnit)).Set(float64(cmd.Tv))
+			tvGauge.WithLabelValues(cmd.TvUnit.String()).Set(float64(cmd.Tv))
 			log.Printf("Cmd #3: FV = %v [%v]\n", cmd.Fv, cmd.FvUnit)
-			fvGauge.WithLabelValues(fmt.Sprint(cmd.FvUnit)).Set(float64(cmd.Tv))
+			fvGauge.WithLabelValues(cmd.FvUnit.String()).Set(float64(cmd.Tv))
 
 		} else if cmd, ok := command.(*univrsl.Command13); ok {
 			log.Printf("Cmd #13: Tag: %v", cmd.Tag)
@@ -107,7 +108,7 @@ func displayResults(device *univrsl.Device, executed <-chan hart.Command) {
 			deviceInfo13Gauge.WithLabelValues(cmd.Tag, cmd.Descriptor, cmd.Date.Format("2006-01-02")).Set(1)
 
 		} else if cmd, ok := command.(*univrsl.Command15); ok {
-			unit := fmt.Sprint(cmd.UpperAndLowerRangeValuesUnit)
+			unit := cmd.UpperAndLowerRangeValuesUnit.String()
 			log.Printf("Cmd #15: %v", cmd)
 			log.Printf("Cmd #15: Range = %v ... %v [%v]\n", cmd.LowerRangeValue, cmd.UpperRangeValue, unit)
 			log.Printf("Cmd #15: Damping = %v [s]\n", cmd.Damping)
