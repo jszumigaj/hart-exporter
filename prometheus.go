@@ -16,19 +16,19 @@ var (
 		Help: "HART command 13 output",
 	}, []string{"Tag", "Descriptor", "Date"})
 
-	deviceStatusInfoGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "device_status_info",
-		Help: "HART field device status",
+	deviceStatusCounter = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "device_status",
+		Help: "HART field device status counter",
 	}, []string{"Status"})
 
-	commandStatusInfoGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "command_status_info",
-		Help: "HART last command status",
+	commandStatusCounter = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "command_status",
+		Help: "HART command status counter",
 	}, []string{"Status"})
 
 	hartCommErrorsCounter = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "hart_communication_errors_counter",
-		Help: "HART communications errors counter",
+		Name: "hart_communication_errors_count",
+		Help: "HART communications errors total counter",
 	}, []string{"Error"})
 
 	pvGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
@@ -84,5 +84,5 @@ func init() {
 		Help: "Application info",
 	}, []string{"version"})
 
-	appInfoGauge.WithLabelValues("0.2.0").Set(1)
+	appInfoGauge.WithLabelValues("0.3.0").Set(1)
 }

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/jszumigaj/hart"
+	"github.com/jszumigaj/hart/status"
 	"github.com/jszumigaj/hart/univrsl"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -58,7 +59,7 @@ func executeCommands(master *hart.Master, device *univrsl.Device, commands []har
 
 			if _, err := master.Execute(cmd, device); err != nil {
 				log.Println(cmd.Description(), "error:", err)
-				hartCommErrorsCounter.WithLabelValues(err.Error()).Inc()
+				incrementHartCommErrorsCounter(err)
 			} else {
 				executed <- cmd
 			}
@@ -69,12 +70,29 @@ func executeCommands(master *hart.Master, device *univrsl.Device, commands []har
 	}
 }
 
+// This funct increments errors counters by name. In case flags errors each flag will be counted separatelly.
+func incrementHartCommErrorsCounter(err error) {
+	// if this is Communications error flags they should be count spearate by each flags, not together.
+	if e, ok := err.(status.CommunicationsErrorSummaryFlags); ok {
+		for i := 0; i < 8; i++ {
+			mask := status.CommunicationsErrorSummaryFlags(1 << i)
+			if e.HasFlag(mask) {
+				hartCommErrorsCounter.WithLabelValues(mask.Error()).Inc()
+			}
+		}
+		return
+	}
+		
+	// this is not comm error flag
+	hartCommErrorsCounter.WithLabelValues(err.Error()).Inc()
+}
+
 func displayResults(device *univrsl.Device, executed <-chan hart.Command) {
 	for command := range executed {
 		log.Println("Command status:", command.Status())
 		log.Println("Device status:", device.Status())
-		deviceStatusInfoGauge.WithLabelValues(device.Status().String()).Inc()
-		commandStatusInfoGauge.WithLabelValues(command.Status().String()).Inc()
+		deviceStatusCounter.WithLabelValues(device.Status().String()).Inc()
+		commandStatusCounter.WithLabelValues(command.Status().String()).Inc()
 
 		if _, ok := command.(*univrsl.Command0); ok {
 			log.Printf("Cmd #0: Device %v", device)
