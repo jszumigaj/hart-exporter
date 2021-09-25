@@ -78,11 +78,11 @@ var (
 )
 
 func init() {
-	
+
 	var appInfoGauge = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "app_info",
 		Help: "Application info",
 	}, []string{"version"})
 
-	appInfoGauge.WithLabelValues("0.3.0").Set(1)
+	appInfoGauge.WithLabelValues("0.3.1").Set(1)
 }
