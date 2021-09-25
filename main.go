@@ -94,24 +94,25 @@ func displayResults(device *univrsl.Device, executed <-chan hart.Command) {
 		deviceStatusCounter.WithLabelValues(device.Status().String()).Inc()
 		commandStatusCounter.WithLabelValues(command.Status().String()).Inc()
 
-		if _, ok := command.(*univrsl.Command0); ok {
+		switch cmd := command.(type) {
+		case *univrsl.Command0:
 			log.Printf("Cmd #0: Device %v", device)
 			manid := fmt.Sprintf("%x", device.ManufacturerId())
 			devtype := fmt.Sprintf("%x", device.MfrsDeviceType())
 			devid := fmt.Sprintf("%07d", device.Id())
 			deviceInfoGauge.WithLabelValues(manid, devtype, devid).Set(1)
 
-		} else if cmd, ok := command.(*univrsl.Command1); ok {
+		case *univrsl.Command1:
 			log.Printf("Cmd #1: PV = %v [%v]\n", cmd.PV, cmd.Unit)
 			pvGauge.WithLabelValues(cmd.Unit.String()).Set(float64(cmd.PV))
 
-		} else if cmd, ok := command.(*univrsl.Command2); ok {
+		case *univrsl.Command2:
 			log.Printf("Cmd #2: Current = %v [mA]\n", cmd.Current)
 			log.Printf("Cmd #2: PoR = %v [%%]\n", cmd.PercentOfRange)
 			currentGauge.Set(float64(cmd.Current))
 			porGauge.Set(float64(cmd.PercentOfRange))
 
-		} else if cmd, ok := command.(*univrsl.Command3); ok {
+		case *univrsl.Command3:
 			log.Printf("Cmd #3: SV = %v [%v]\n", cmd.Sv, cmd.SvUnit)
 			svGauge.WithLabelValues(cmd.SvUnit.String()).Set(float64(cmd.Sv))
 			log.Printf("Cmd #3: TV = %v [%v]\n", cmd.Tv, cmd.TvUnit)
@@ -119,13 +120,13 @@ func displayResults(device *univrsl.Device, executed <-chan hart.Command) {
 			log.Printf("Cmd #3: FV = %v [%v]\n", cmd.Fv, cmd.FvUnit)
 			fvGauge.WithLabelValues(cmd.FvUnit.String()).Set(float64(cmd.Tv))
 
-		} else if cmd, ok := command.(*univrsl.Command13); ok {
+		case *univrsl.Command13:
 			log.Printf("Cmd #13: Tag: %v", cmd.Tag)
 			log.Printf("Cmd #13: Descriptor: %v", cmd.Descriptor)
 			log.Printf("Cmd #13: Date: %v", cmd.Date.Format("2006-01-02"))
 			deviceInfo13Gauge.WithLabelValues(cmd.Tag, cmd.Descriptor, cmd.Date.Format("2006-01-02")).Set(1)
 
-		} else if cmd, ok := command.(*univrsl.Command15); ok {
+		case *univrsl.Command15:
 			unit := cmd.UpperAndLowerRangeValuesUnit.String()
 			log.Printf("Cmd #15: %v", cmd)
 			log.Printf("Cmd #15: Range = %v ... %v [%v]\n", cmd.LowerRangeValue, cmd.UpperRangeValue, unit)
