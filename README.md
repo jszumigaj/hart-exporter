@@ -1,44 +1,26 @@
-```
-		concept:
+hart-exporter
+=============
 
-		serial := hart.Open("COM1")
-		defer serial.Close()
-		master := hart.NewMaster(serial)
-		device := device.UniversalDevice{}
+[Prometheus](https://prometheus.io/) exporter which retrieves device variables from a [HART](https://en.wikipedia.org/wiki/Highway_Addressable_Remote_Transducer_Protocol) transmitters and exports them  for [Prometheus](https://prometheus.io/) and [Grafana](https://grafana.com/).
 
-		cmd0 := device.Command0()
-		cmd1 := device.Command1()
-		cmd2 := device.Command2()
-		
-		executor.Execute(cmd0)
-		executor.Execute(cmd1)
-		executor.Execute(cmd2)
-```
+In other words this is like [modbus-exporter](https://github.com/RichiH/modbus_exporter) but for [HART](https://en.wikipedia.org/wiki/Highway_Addressable_Remote_Transducer_Protocol).
 
-```	
-		SendFrame example:
 
-		com, err := hart.Open("COM1")
-		if err != nil {
-			log.Fatal(err)
-		}
+Usage
+-----
 
-		defer com.Close()
+`hart-exporter.exe [OPTIONS]`
 
-		f0 := hart.FrameZero
-		tx := f0.Buffer()
-		log.Printf("Tx: %x", tx)
+Options:
+- `-c`  COM port name. Default "COM1"
+- `-l` Listening TCP port with metrics. Default 9090
+- `-d` Delay between each commands set execution in seconds. Default 10
 
-		rx := make([]byte, 128)
-		n, err := com.SendFrame(tx, rx)
-		if err != nil {
-			log.Fatal(err)
-		}
+After lunch all metrics are available at the endpoint http://localhost:9090/metrics
 
-		log.Printf("RxBuf %v: %02x", n, rx[:n])
+Dashboard example 
+-----------------
 
-		if reply, ok := hart.Parse(rx); ok {
-			log.Printf("Reply: %v", *reply)
-		}
-	*/
-```
+Source includes example json file with Grafana dashboard:
+
+![Dashboard](Grafana/grafana.png)
