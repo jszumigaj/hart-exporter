@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	serialPort = flag.String("c", "COM1", "Serial port name.")
+	serialPortName = flag.String("c", "COM1", "Serial port name.")
 	listenPort = flag.Int("l", 9090, "Listening port.")
 	delay      = flag.Int("d", 10, "Delay between each commands set execution in seconds.")
 )
@@ -23,9 +23,9 @@ var (
 func main() {
 	flag.Parse()
 	log.Printf("Start reading commands every %d sec", *delay)
-	log.Printf("Using serial port %s", *serialPort)
+	log.Printf("Using serial port %s", *serialPortName)
 
-	serial, err := hart.Open(*serialPort)
+	serial, err := hart.Open(*serialPortName)
 	if err != nil {
 		log.Fatalln("ERROR:", err)
 	}
